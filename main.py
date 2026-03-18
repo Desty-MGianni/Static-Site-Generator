@@ -1,24 +1,32 @@
 import os
 import shutil
+import sys
 
 from src.helpers_main import generate_page_recursive, move_file
 
 
 def main() -> None:
-    script_dir_path: str = os.path.dirname(os.path.abspath(__file__))
-    static_path: str = os.path.join(script_dir_path, "static")
-    public_path: str = os.path.join(script_dir_path, "public")
 
-    if os.path.exists(public_path):
-        shutil.rmtree(public_path)
-    os.mkdir(public_path)
+    basepath: str = sys.argv[1] if len(sys.argv) > 1 else "/"
+    root: str = os.path.dirname(os.path.abspath(__file__))
 
-    move_file(static_path, public_path)
+    path_dict: dict[str, str] = {}
+    path_dict["src"] = os.path.join(root, "static")
+    path_dict["dest"] = os.path.join(root, "docs/")
+    path_dict["content"] = os.path.join(root, "content/")
+    path_dict["template"] = os.path.join(root, "template.html")
 
-    markdown_file_path: str = os.path.join(script_dir_path, "content/")
-    template_file_path: str = os.path.join(script_dir_path, "template.html")
-    full_page_path: str = os.path.join(script_dir_path, "public/")
-    generate_page_recursive(markdown_file_path, template_file_path, full_page_path)
+    if os.path.exists(path_dict["dest"]):
+        shutil.rmtree(path_dict["dest"])
+    os.makedirs(path_dict["dest"], exist_ok=True)
+
+    print(f"Transfering static file to {path_dict["dest"]}...")
+    move_file(path_dict["src"], path_dict["dest"])
+
+    print(f"Generating site with basepath: {basepath}")
+    generate_page_recursive(
+        path_dict["content"], path_dict["template"], path_dict["dest"], basepath
+    )
 
 
 if __name__ == "__main__":
